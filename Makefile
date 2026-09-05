@@ -1,4 +1,4 @@
-FRAME ?= assets/frames/globe.txt
+FRAME ?= assets/frames/donut.txt
 
 render:
 	GITHUB_TOKEN=$$(gh auth token) go run ./cmd/profile -art $(FRAME)
