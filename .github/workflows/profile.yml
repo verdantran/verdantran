@@ -27,6 +27,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+          cache: false # nothing to cache: the generator has no dependencies
 
       - name: Draw a frame
         run: |

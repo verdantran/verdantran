@@ -80,26 +80,35 @@ func run() error {
 	if err := write(*svg, render.SVG(lines, frame, *title)); err != nil {
 		return err
 	}
-	if err := patchReadme(*readme, block, *plain); err != nil {
+	patched, err := patchReadme(*readme, block, *plain)
+	if err != nil {
 		return err
 	}
-	fmt.Printf("wrote %s and %s (%d public repos, %d stars, %d commits)\n",
-		*svg, *readme, stats.PublicRepos, stats.Stars, stats.Commits)
+	written := *svg
+	if patched {
+		written += " and " + *readme
+	}
+	fmt.Printf("wrote %s (%d public repos, %d stars, %d commits all-time)\n",
+		written, stats.PublicRepos, stats.Stars, stats.AllCommits)
 	return nil
 }
 
 // patchReadme swaps whatever sits between the markers for a fresh fence,
-// leaving the hand-written rest of the page alone.
-func patchReadme(path, block string, plain bool) error {
+// leaving the hand-written rest of the page alone. A README carrying no
+// markers wants only the banner, and is left untouched.
+func patchReadme(path, block string, plain bool) (bool, error) {
 	raw, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return false, err
 	}
 	doc := string(raw)
 	i := strings.Index(doc, startMark)
 	j := strings.Index(doc, endMark)
-	if i < 0 || j < 0 || j < i {
-		return fmt.Errorf("%s: missing %s / %s markers", path, startMark, endMark)
+	if i < 0 || j < 0 {
+		return false, nil
+	}
+	if j < i {
+		return false, fmt.Errorf("%s: %s appears before %s", path, endMark, startMark)
 	}
 
 	lang := "ansi"
@@ -107,7 +116,7 @@ func patchReadme(path, block string, plain bool) error {
 		lang = ""
 	}
 	fenced := fmt.Sprintf("%s\n```%s\n%s\n```\n%s", startMark, lang, block, endMark)
-	return write(path, doc[:i]+fenced+doc[j+len(endMark):])
+	return true, write(path, doc[:i]+fenced+doc[j+len(endMark):])
 }
 
 func write(path, body string) error {

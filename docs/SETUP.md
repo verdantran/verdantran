@@ -5,11 +5,14 @@
 
 - `internal/render.SVG` draws `assets/terminal.svg` — a CRT terminal that types
   itself out, holds on the prompt, and loops.
-- `internal/render.ANSI` draws the same lines as an ANSI-coloured block, which
-  the README carries inside a `<details>` for anyone who wants selectable text.
+- `internal/render.ANSI` draws the same lines as an ANSI-coloured block. The
+  page does not carry it, but `make show` prints it, which is the quickest way
+  to see a change without opening a browser.
 
-The README is rewritten only between the `<!-- stats:start -->` and
-`<!-- stats:end -->` markers. Everything else on the page is yours to edit.
+The page is only the banner. To put the text block on it as well, drop a pair
+of `<!-- stats:start -->` / `<!-- stats:end -->` markers into `README.md` and
+the generator will keep an ANSI fence between them — GitHub renders those in
+colour. Without the markers the README is left alone entirely.
 
 ## Running it locally
 
