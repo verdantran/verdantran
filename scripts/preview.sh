@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 # Screenshot the terminal SVG at a chosen point in its loop. Chrome's virtual
 # clock does not drive CSS animations, so the frame is picked with a negative
-# animation-delay instead.
+# animation-delay instead. Prints the path it wrote.
 set -euo pipefail
 svg="${1:-assets/terminal.svg}"
 at="${2:--8s}"
-out="${3:-/tmp/terminal-preview.png}"
-html="$(mktemp -t preview).html"
+
+# A private 0700 directory, so neither the scratch page nor the screenshot
+# lands on a name anyone else on the machine can predict or pre-create.
+work="$(mktemp -d)"
+html="$work/preview.html"
+out="${3:-$work/terminal-preview.png}"
+trap 'rm -f "$html"' EXIT
 
 {
   printf '<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#0d1117}'
