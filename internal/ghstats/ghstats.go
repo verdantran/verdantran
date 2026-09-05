@@ -18,7 +18,7 @@ const endpoint = "https://api.github.com/graphql"
 // Two repository sets come back: the public one, which is the only source of
 // names the page is allowed to print, and everything the token can see, which
 // feeds the aggregates. With a plain GITHUB_TOKEN the two are identical.
-const query = `query($login: String!) {
+const queryHead = `query($login: String!) {
   user(login: $login) {
     login
     name
@@ -37,6 +37,7 @@ const query = `query($login: String!) {
       restrictedContributionsCount
       totalPullRequestContributions
     }
+%s
   }
 }
 
@@ -49,6 +50,22 @@ fragment bits on Repository {
     edges { size node { name } }
   }
 }`
+
+// firstYear is GitHub's own founding year — a safe floor for the all-time
+// walk, since a year before the account existed simply returns zero.
+const firstYear = 2008
+
+// buildQuery aliases one contributionsCollection per calendar year. The API
+// caps a single collection at a twelve-month span, so an all-time commit count
+// has to be summed year by year.
+func buildQuery() string {
+	var years strings.Builder
+	for y := firstYear; y <= time.Now().UTC().Year(); y++ {
+		fmt.Fprintf(&years, "    y%d: contributionsCollection(from: %q, to: %q) { totalCommitContributions restrictedContributionsCount }\n",
+			y, fmt.Sprintf("%d-01-01T00:00:00Z", y), fmt.Sprintf("%d-12-31T23:59:59Z", y))
+	}
+	return fmt.Sprintf(queryHead, years.String())
+}
 
 type Repo struct {
 	Name        string
@@ -70,7 +87,8 @@ type Stats struct {
 	PublicRepos int
 	OtherRepos  int // private and internal, when the token can see them
 	Stars       int
-	Commits     int
+	Commits     int // last 365 days
+	AllCommits  int
 	PRs         int
 	TopRepos    []Repo
 	Langs       []Lang
@@ -97,6 +115,16 @@ type repoSet struct {
 	Nodes      []repoNode `json:"nodes"`
 }
 
+type contributions struct {
+	TotalCommitContributions      int `json:"totalCommitContributions"`
+	RestrictedContributionsCount  int `json:"restrictedContributionsCount"`
+	TotalPullRequestContributions int `json:"totalPullRequestContributions"`
+}
+
+func (c contributions) commits() int {
+	return c.TotalCommitContributions + c.RestrictedContributionsCount
+}
+
 type response struct {
 	Data struct {
 		User struct {
@@ -106,13 +134,9 @@ type response struct {
 			Followers struct {
 				TotalCount int `json:"totalCount"`
 			} `json:"followers"`
-			Public                  repoSet `json:"public"`
-			All                     repoSet `json:"all"`
-			ContributionsCollection struct {
-				TotalCommitContributions      int `json:"totalCommitContributions"`
-				RestrictedContributionsCount  int `json:"restrictedContributionsCount"`
-				TotalPullRequestContributions int `json:"totalPullRequestContributions"`
-			} `json:"contributionsCollection"`
+			Public                  repoSet       `json:"public"`
+			All                     repoSet       `json:"all"`
+			ContributionsCollection contributions `json:"contributionsCollection"`
 		} `json:"user"`
 	} `json:"data"`
 	Errors []struct {
@@ -132,7 +156,7 @@ type Opts struct {
 
 func Fetch(login, token string, o Opts) (*Stats, error) {
 	body, err := json.Marshal(map[string]any{
-		"query":     query,
+		"query":     buildQuery(),
 		"variables": map[string]string{"login": login},
 	})
 	if err != nil {
@@ -170,6 +194,28 @@ func Fetch(login, token string, o Opts) (*Stats, error) {
 		return nil, fmt.Errorf("github api: no user %q in response", login)
 	}
 
+	// The year aliases are decoded separately: their names are built at
+	// request time, so they cannot be struct fields.
+	var envelope struct {
+		Data struct {
+			User map[string]json.RawMessage `json:"user"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(raw, &envelope); err != nil {
+		return nil, err
+	}
+	allCommits := 0
+	for key, val := range envelope.Data.User {
+		if !isYearAlias(key) {
+			continue
+		}
+		var c contributions
+		if err := json.Unmarshal(val, &c); err != nil {
+			return nil, fmt.Errorf("github api: %s: %w", key, err)
+		}
+		allCommits += c.commits()
+	}
+
 	s := &Stats{
 		Login:       u.Login,
 		Name:        u.Name,
@@ -177,7 +223,8 @@ func Fetch(login, token string, o Opts) (*Stats, error) {
 		Followers:   u.Followers.TotalCount,
 		PublicRepos: u.Public.TotalCount,
 		OtherRepos:  max(u.All.TotalCount-u.Public.TotalCount, 0),
-		Commits:     u.ContributionsCollection.TotalCommitContributions + u.ContributionsCollection.RestrictedContributionsCount,
+		Commits:     u.ContributionsCollection.commits(),
+		AllCommits:  allCommits,
 		PRs:         u.ContributionsCollection.TotalPullRequestContributions,
 		FetchedAt:   time.Now().UTC(),
 	}
@@ -255,6 +302,19 @@ func Ago(t time.Time) string {
 	default:
 		return fmt.Sprintf("%dy ago", int(d.Hours()/24/365))
 	}
+}
+
+// isYearAlias matches the yNNNN keys buildQuery emits.
+func isYearAlias(k string) bool {
+	if len(k) != 5 || k[0] != 'y' {
+		return false
+	}
+	for _, c := range k[1:] {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 func clip(b []byte, n int) string {

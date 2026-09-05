@@ -31,6 +31,7 @@ The workflow uses `secrets.PROFILE_TOKEN` if it exists and the built-in
 |---|---|---|
 | public repos, stars, followers | yes | yes |
 | commits in private repos | **no — reports 0** | yes |
+| all-time commit count | public only | everything |
 | language mix across private work | no | yes |
 
 Private repositories are only ever counted. Their names and descriptions are
@@ -47,7 +48,7 @@ public work.
 ```
 -login            GitHub user to read (default verdantran)
 -art              file holding a wakeart frame for the banner
--repos            how many repositories to list; 0 drops the section
+-repos            how many public repositories to list; 0 drops the section
 -langs            how many languages to list
 -exclude-langs    languages to leave out of the mix (default "Jupyter Notebook")
 -include-private  count private work in the totals (default true)
@@ -58,6 +59,12 @@ public work.
 `-exclude-langs` exists because GitHub sizes a language by bytes on disk, and a
 Jupyter notebook stores its own rendered output — one notebook can outweigh
 every other repository put together.
+
+## The all-time commit count
+
+GitHub caps a `contributionsCollection` at a twelve-month span, so the all-time
+number is one aliased collection per calendar year from 2008 to now, summed —
+still a single request. A year before the account existed just returns zero.
 
 ## The art
 

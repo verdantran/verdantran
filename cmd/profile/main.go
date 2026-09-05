@@ -33,7 +33,7 @@ func run() error {
 		art    = flag.String("art", "", "file holding a wakeart frame for the banner")
 		readme = flag.String("readme", "README.md", "README to rewrite between the stats markers")
 		svg    = flag.String("svg", "assets/terminal.svg", "where to write the animated terminal")
-		repos  = flag.Int("repos", 3, "how many repositories to list")
+		repos  = flag.Int("repos", 0, "how many public repositories to list; 0 drops the section")
 		langs  = flag.Int("langs", 4, "how many languages to list")
 		title  = flag.String("title", "", "terminal title (default <login>@github)")
 		skip   = flag.String("exclude-langs", "Jupyter Notebook", "comma-separated languages to leave out of the mix")

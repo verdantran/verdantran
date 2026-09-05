@@ -12,7 +12,10 @@ import (
 // column and forced to an exact width, so the layout survives whatever
 // monospace font the viewer happens to have.
 const (
-	svgW      = 1000
+	minW      = 940
+	minArtW   = 300
+	gutter    = 36
+	padRight  = 30
 	titleH    = 34
 	padTop    = 26
 	padBottom = 26
@@ -21,8 +24,6 @@ const (
 	lineH     = 21
 	charW     = 8.4
 
-	artX      = 560
-	artW      = 410
 	artFont   = 9.0
 	artLineH  = 10.0
 	artCharW  = 5.4
@@ -52,11 +53,19 @@ func SVG(lines []content.Line, art []string, title string) string {
 	bodyH := len(lines) * lineH
 	h := titleH + padTop + bodyH + padBottom
 
+	cols := 0
+	for _, l := range lines {
+		cols = max(cols, l.Width())
+	}
+	artX := padLeft + int(float64(cols)*charW) + gutter
+	svgW := max(minW, artX+minArtW+padRight)
+	artW := svgW - artX - padRight
+
 	var b strings.Builder
 	fmt.Fprintf(&b, `<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" viewBox="0 0 %d %d" role="img" aria-label="%s">`,
 		svgW, h, svgW, h, esc(title))
 
-	b.WriteString(defs(h))
+	b.WriteString(defs(h, artX, artW))
 	b.WriteString(styles(lines))
 
 	// Screen.
@@ -72,7 +81,7 @@ func SVG(lines []content.Line, art []string, title string) string {
 	fmt.Fprintf(&b, `<text x="%d" y="22" class="chrome">%s</text>`, svgW/2-90, esc(title))
 
 	b.WriteString(`<g filter="url(#glow)">`)
-	b.WriteString(artGroup(art, bodyH))
+	b.WriteString(artGroup(art, bodyH, artX, artW))
 
 	// Readout.
 	base := float64(titleH + padTop + fontSize)
@@ -109,7 +118,7 @@ func SVG(lines []content.Line, art []string, title string) string {
 	return b.String()
 }
 
-func defs(h int) string {
+func defs(h, artX, artW int) string {
 	return fmt.Sprintf(`<defs>`+
 		`<pattern id="scanlines" width="1" height="3" patternUnits="userSpaceOnUse">`+
 		`<rect width="1" height="1" fill="#8ff" opacity=".055"/></pattern>`+
@@ -177,7 +186,7 @@ func animation(lines []content.Line) string {
 
 // artGroup places a trimmed wakeart frame in the right-hand panel, scaled to
 // fit and dimmed to a watermark.
-func artGroup(art []string, bodyH int) string {
+func artGroup(art []string, bodyH, artX, artW int) string {
 	if len(art) == 0 {
 		return ""
 	}

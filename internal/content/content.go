@@ -76,13 +76,9 @@ func Build(s *ghstats.Stats) []Line {
 	}
 	field("OPERATOR", who, Value)
 	field("UPTIME", s.Uptime(), Value)
-	repos := fmt.Sprintf("%d public", s.PublicRepos)
-	if s.OtherRepos > 0 {
-		repos += fmt.Sprintf("  ·  %d private", s.OtherRepos)
-	}
-	field("REPOSITORIES", repos, Value)
 	field("STARS", fmt.Sprintf("%d", s.Stars), Value)
 	field("FOLLOWERS", fmt.Sprintf("%d", s.Followers), Value)
+	field("COMMITS TOTAL", fmt.Sprintf("%d", s.AllCommits), Value)
 	field("COMMITS / 365d", fmt.Sprintf("%d", s.Commits), Value)
 	blank()
 
