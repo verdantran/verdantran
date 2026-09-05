@@ -121,7 +121,12 @@ type contributions struct {
 	TotalPullRequestContributions int `json:"totalPullRequestContributions"`
 }
 
-func (c contributions) commits() int {
+// commits counts private work only when asked. The restricted count is what
+// the API returns for repositories the token can see but the page may not name.
+func (c contributions) commits(private bool) int {
+	if !private {
+		return c.TotalCommitContributions
+	}
 	return c.TotalCommitContributions + c.RestrictedContributionsCount
 }
 
@@ -213,7 +218,7 @@ func Fetch(login, token string, o Opts) (*Stats, error) {
 		if err := json.Unmarshal(val, &c); err != nil {
 			return nil, fmt.Errorf("github api: %s: %w", key, err)
 		}
-		allCommits += c.commits()
+		allCommits += c.commits(o.IncludePrivate)
 	}
 
 	s := &Stats{
@@ -223,7 +228,7 @@ func Fetch(login, token string, o Opts) (*Stats, error) {
 		Followers:   u.Followers.TotalCount,
 		PublicRepos: u.Public.TotalCount,
 		OtherRepos:  max(u.All.TotalCount-u.Public.TotalCount, 0),
-		Commits:     u.ContributionsCollection.commits(),
+		Commits:     u.ContributionsCollection.commits(o.IncludePrivate),
 		AllCommits:  allCommits,
 		PRs:         u.ContributionsCollection.TotalPullRequestContributions,
 		FetchedAt:   time.Now().UTC(),
