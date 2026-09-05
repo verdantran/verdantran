@@ -38,13 +38,19 @@ The workflow uses `secrets.PROFILE_TOKEN` if it exists and the built-in
 | language mix across private work | no | yes |
 
 Private repositories are only ever counted. Their names and descriptions are
-never printed: the named list is drawn from the public set alone.
+never printed: the named list is drawn from the public set alone. The language
+mix is the exception the table above records — with a PAT it is a distribution
+over private code too, so it says something about work the page does not name.
+Pass `-include-private=false` if that is more than you want to publish.
 
-To add the PAT: create a fine-grained or classic token with `repo` and
-`read:user`, then `gh secret set PROFILE_TOKEN`.
+To add the PAT: create a **fine-grained** token, scoped to your own account,
+with read-only access and no more than it needs — repository permissions
+*Contents: read* and *Metadata: read*, account permission *Followers: read*.
+Then `gh secret set PROFILE_TOKEN`.
 
-Pass `-include-private=false` if you would rather the totals only ever describe
-public work.
+The job only ever reads, so the token should never be able to write. A classic
+token with `repo` also works, but that scope grants write on every repository
+you own, and it sits in the environment of a public repository's workflow.
 
 ## Flags
 

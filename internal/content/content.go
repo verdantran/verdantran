@@ -72,7 +72,7 @@ func Build(s *ghstats.Stats) []Line {
 	blank()
 	who := s.Login
 	if s.Name != "" {
-		who = fmt.Sprintf("%s (%s)", s.Name, s.Login)
+		who = fmt.Sprintf("%s (%s)", safe(s.Name), s.Login)
 	}
 	field("OPERATOR", who, Value)
 	field("UPTIME", s.Uptime(), Value)
@@ -103,10 +103,10 @@ func Build(s *ghstats.Stats) []Line {
 		for _, r := range s.TopRepos {
 			add(Line{
 				{"  ", Dim},
-				{pad(r.Name, 20), Label},
+				{pad(safe(r.Name), 20), Label},
 				{pad("★ "+fmt.Sprint(r.Stars), 6), Accent},
 				{pad(ghstats.Ago(r.PushedAt), 9), Dim},
-				{truncate(r.Description, 24), Dim},
+				{truncate(safe(r.Description), 24), Dim},
 			})
 		}
 		blank()
@@ -129,6 +129,23 @@ func bar(percent float64, width int) []Seg {
 		{strings.Repeat("█", on), BarOn},
 		{strings.Repeat("░", width-on), BarOff},
 	}
+}
+
+// safe neutralises free text from the API before it reaches a renderer: a
+// backtick would close the README's code fence, and an ESC would be read as
+// colour by the ANSI block. Runs before truncate, so widths stay honest.
+func safe(s string) string {
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r == '`':
+			return '\''
+		case r == '\n' || r == '\r' || r == '\t':
+			return ' '
+		case r < 0x20 || r == 0x7f:
+			return -1
+		}
+		return r
+	}, s)
 }
 
 func pad(s string, w int) string {

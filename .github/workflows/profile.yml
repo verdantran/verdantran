@@ -22,17 +22,19 @@ jobs:
   render:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Pinned to a commit: a tag can be moved, and this job runs with
+      # PROFILE_TOKEN in its environment.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version: stable
           cache: false # nothing to cache: the generator has no dependencies
 
       - name: Render the readout
         env:
-          # A PAT with `repo` and `read:user` counts private work in the
-          # totals. Without it the built-in token sees public repos only.
+          # A read-only PAT counts private work in the totals. Without it
+          # the built-in token sees public repos only.
           GITHUB_TOKEN: ${{ secrets.PROFILE_TOKEN || secrets.GITHUB_TOKEN }}
         run: go run ./cmd/profile -art assets/frames/donut.txt
 
