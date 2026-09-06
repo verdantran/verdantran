@@ -78,3 +78,10 @@ The workflow runs once a day. GitHub disables a scheduled workflow after 60
 days without repository activity, and a push made by `GITHUB_TOKEN` does not
 reset that clock. Run the `profile` workflow by hand from the Actions tab, from
 `main`, and the schedule resumes.
+
+## Written with AI
+
+Most of this repository — the Go under `cmd` and `internal`, the workflow, and
+these notes — was written with Claude Code.
+
+Treat it accordingly.
