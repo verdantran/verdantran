@@ -67,6 +67,14 @@ func Build(s *ghstats.Stats) []Line {
 			{" " + value, class},
 		})
 	}
+	// count prints a metric, or omits the row entirely when there is nothing
+	// to report — an empty account reads better than a wall of zeroes.
+	count := func(label string, n int) {
+		if n == 0 {
+			return
+		}
+		field(label, fmt.Sprintf("%d", n), Value)
+	}
 
 	cmd("./identity --scan")
 	blank()
@@ -76,10 +84,10 @@ func Build(s *ghstats.Stats) []Line {
 	}
 	field("OPERATOR", who, Value)
 	field("UPTIME", s.Uptime(), Value)
-	field("STARS", fmt.Sprintf("%d", s.Stars), Value)
-	field("FOLLOWERS", fmt.Sprintf("%d", s.Followers), Value)
-	field("COMMITS TOTAL", fmt.Sprintf("%d", s.AllCommits), Value)
-	field("COMMITS / 365d", fmt.Sprintf("%d", s.Commits), Value)
+	count("STARS", s.Stars)
+	count("FOLLOWERS", s.Followers)
+	count("COMMITS TOTAL", s.AllCommits)
+	count("COMMITS / 365d", s.Commits)
 	blank()
 
 	if len(s.Langs) > 0 {
@@ -104,7 +112,7 @@ func Build(s *ghstats.Stats) []Line {
 			add(Line{
 				{"  ", Dim},
 				{pad(safe(r.Name), 20), Label},
-				{pad("★ "+fmt.Sprint(r.Stars), 6), Accent},
+				{pad(badge(r.Stars), 6), Accent},
 				{pad(ghstats.Ago(r.PushedAt), 9), Dim},
 				{truncate(safe(r.Description), 24), Dim},
 			})
@@ -120,6 +128,15 @@ func Build(s *ghstats.Stats) []Line {
 }
 
 func (l Line) append(segs ...Seg) Line { return append(l, segs...) }
+
+// badge is a repo's star count, blank at zero. The column keeps its width
+// either way, so the rows after it stay aligned.
+func badge(n int) string {
+	if n == 0 {
+		return ""
+	}
+	return "★ " + fmt.Sprint(n)
+}
 
 // bar draws a proportion in block glyphs, split so each half can be coloured.
 func bar(percent float64, width int) []Seg {
