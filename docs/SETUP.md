@@ -48,17 +48,6 @@ GitHub caps a `contributionsCollection` at a twelve-month span, so the all-time
 number is one aliased collection per calendar year from 2008 to now, summed —
 still a single request. A year before the account existed just returns zero.
 
-## The art
-
-The banner draws `assets/frames/donut.txt` — a single frame captured from
-[wakeart](https://github.com/verdantran/wakeart), committed here rather than
-regenerated on every run. To change the picture, drop in another frame and
-point the workflow's `-art` at it:
-
-```
-wakeart --once --scene ridge --seed 7 > assets/frames/ridge.txt
-```
-
 ## If the panel goes stale
 
 The workflow runs once a day. GitHub disables a scheduled workflow after 60
