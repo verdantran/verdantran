@@ -25,59 +25,6 @@ make preview   # render, then screenshot the SVG mid-loop
 `make` borrows a token from `gh auth token`. The generator needs `GITHUB_TOKEN`
 set however you run it.
 
-## The token
-
-The workflow uses `secrets.PROFILE_TOKEN` if it exists and the built-in
-`GITHUB_TOKEN` otherwise. The difference matters:
-
-| | `GITHUB_TOKEN` | a PAT in `PROFILE_TOKEN` |
-|---|---|---|
-| public repos, stars, followers | yes | yes |
-| commits in private repos | **no — reports 0** | yes |
-| all-time commit count | public only | everything |
-| language mix across private work | no | yes |
-
-Private repositories are only ever counted. Their names and descriptions are
-never printed: the named list is drawn from the public set alone. The language
-mix is the exception the table above records — with a PAT it is a distribution
-over private code too, so it says something about work the page does not name.
-Pass `-include-private=false` if that is more than you want to publish.
-
-To add the PAT: create a **fine-grained** token owned by your own account, set
-**repository access to all repositories**, and leave every repository
-permission at *no access*. The *Metadata: read* that every fine-grained token
-carries and cannot drop is the only one this needs. Nothing else — not
-*Contents*, not *Followers* — buys anything: the generator reads repository
-metadata and the user-level contribution graph, and never opens a file.
-
-Repository access is the setting that does the work, not the permissions.
-Narrow it to selected repositories and the `all:` set collapses onto the public
-one, taking the private half of every total with it.
-
-The token lives on the `prod` environment, which is restricted to `main`:
-
-```
-gh secret set PROFILE_TOKEN --env prod
-```
-
-An environment secret is only visible to a job that names the environment, so
-`profile.yml` declares `environment: prod`. Drop that line and the workflow
-still passes — `secrets.PROFILE_TOKEN` resolves to empty, the `||` falls
-through to `GITHUB_TOKEN`, and the readout quietly loses its private numbers.
-The same silence follows an expired token, so if the totals shrink overnight,
-suspect the token before you suspect the arithmetic.
-
-If private commits still read as zero with the PAT in place, check **Settings →
-Public profile → Include private contributions on my profile**. The API gates
-`restrictedContributionsCount` on that switch as well as on the token.
-
-The job only ever reads, and the commit it makes is pushed by the workflow's
-own `GITHUB_TOKEN`, so the PAT never needs write. Leaked, a metadata-only token
-discloses the names, descriptions, sizes, languages and push times of private
-repositories, and who collaborates on them — but no code, no issues, no
-Actions, and nothing owned by an organisation. A classic token with `repo`
-would leak all of it and grant write besides, which is why this is fine-grained.
-
 ## Flags
 
 ```
@@ -116,6 +63,5 @@ wakeart --once --scene ridge --seed 7 > assets/frames/ridge.txt
 
 The workflow runs once a day. GitHub disables a scheduled workflow after 60
 days without repository activity, and a push made by `GITHUB_TOKEN` does not
-reset that clock. Run the `profile` workflow by hand from the Actions tab and
-the schedule resumes — **from `main`**, since the `prod` environment refuses
-every other branch.
+reset that clock. Run the `profile` workflow by hand from the Actions tab, from
+`main`, and the schedule resumes.
