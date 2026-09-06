@@ -1,5 +1,5 @@
 FRAME ?= assets/frames/donut.txt
-THEME ?= neon
+THEME ?= mono
 
 render:
 	GITHUB_TOKEN=$$(gh auth token) go run ./cmd/profile -art $(FRAME) -theme $(THEME)
