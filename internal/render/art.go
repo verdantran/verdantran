@@ -5,8 +5,8 @@ import (
 	"unicode/utf8"
 )
 
-// TrimArt crops a wakeart frame to its bounding box. The renderer pads every
-// frame out to the full 80x24 viewport, which is mostly empty space.
+// TrimArt crops an ASCII art frame to its bounding box. Frames arrive padded
+// out to the full 80x24 viewport, which is mostly empty space.
 func TrimArt(s string) []string {
 	raw := strings.Split(strings.ReplaceAll(s, "\r\n", "\n"), "\n")
 

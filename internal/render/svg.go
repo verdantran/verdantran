@@ -184,7 +184,7 @@ func animation(lines []content.Line) string {
 	return b.String()
 }
 
-// artGroup places a trimmed wakeart frame in the right-hand panel, scaled to
+// artGroup places a trimmed ASCII art frame in the right-hand panel, scaled to
 // fit and dimmed to a watermark.
 func artGroup(art []string, bodyH, artX, artW int) string {
 	if len(art) == 0 {

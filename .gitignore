@@ -1,5 +1,5 @@
 .DS_Store
 *.png
 
-# Scratch frame from a local `wakeart` run; the committed one lives in assets/frames.
+# Scratch frame from a local capture; the committed one lives in assets/frames.
 frame.txt

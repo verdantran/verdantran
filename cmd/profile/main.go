@@ -30,7 +30,7 @@ func main() {
 func run() error {
 	var (
 		login  = flag.String("login", "verdantran", "GitHub user to read")
-		art    = flag.String("art", "", "file holding a wakeart frame for the banner")
+		art    = flag.String("art", "", "file holding an ASCII art frame for the banner")
 		readme = flag.String("readme", "README.md", "README to rewrite between the stats markers")
 		svg    = flag.String("svg", "assets/terminal.svg", "where to write the animated terminal")
 		repos  = flag.Int("repos", 0, "how many public repositories to list; 0 drops the section")

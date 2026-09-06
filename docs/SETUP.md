@@ -29,7 +29,7 @@ set however you run it.
 
 ```
 -login            GitHub user to read (default verdantran)
--art              file holding a wakeart frame for the banner
+-art              file holding an ASCII art frame for the banner
 -repos            how many public repositories to list; 0 drops the section
 -langs            how many languages to list
 -exclude-langs    languages to leave out of the mix (default "Jupyter Notebook")
