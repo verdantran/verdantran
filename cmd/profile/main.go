@@ -30,13 +30,14 @@ func main() {
 func run() error {
 	var (
 		login  = flag.String("login", "verdantran", "GitHub user to read")
-		art    = flag.String("art", "", "file holding an ASCII art frame for the banner")
+		art    = flag.String("art", "", "file holding the ASCII art frames for the banner")
 		readme = flag.String("readme", "README.md", "README to rewrite between the stats markers")
 		svg    = flag.String("svg", "assets/terminal.svg", "where to write the animated terminal")
 		repos  = flag.Int("repos", 0, "how many public repositories to list; 0 drops the section")
 		langs  = flag.Int("langs", 4, "how many languages to list")
 		title  = flag.String("title", "", "terminal title (default <login>@github)")
 		skip   = flag.String("exclude-langs", "Jupyter Notebook", "comma-separated languages to leave out of the mix")
+		theme  = flag.String("theme", render.DefaultTheme().Name, "palette for both renderers; one of "+render.ThemeNames())
 		plain  = flag.Bool("plain", false, "emit the block without ANSI colour")
 		priv   = flag.Bool("include-private", true, "count private work in the totals (needs a token that can see it); names are never printed")
 		dryRun = flag.Bool("dry-run", false, "print the block to stdout, write nothing")
@@ -50,6 +51,10 @@ func run() error {
 	if *title == "" {
 		*title = *login + "@github"
 	}
+	th, err := render.LookupTheme(*theme)
+	if err != nil {
+		return err
+	}
 
 	stats, err := ghstats.Fetch(*login, token, ghstats.Opts{
 		TopRepos:       *repos,
@@ -61,23 +66,23 @@ func run() error {
 		return err
 	}
 	lines := content.Build(stats)
-	block := render.ANSI(lines, *title, !*plain)
+	block := render.ANSI(lines, *title, !*plain, th)
 
 	if *dryRun {
 		fmt.Println(block)
 		return nil
 	}
 
-	var frame []string
+	var frames [][]string
 	if *art != "" {
 		raw, err := os.ReadFile(*art)
 		if err != nil {
 			return err
 		}
-		frame = render.TrimArt(string(raw))
+		frames = render.TrimFrames(string(raw))
 	}
 
-	if err := write(*svg, render.SVG(lines, frame, *title)); err != nil {
+	if err := write(*svg, render.SVG(lines, frames, *title, th)); err != nil {
 		return err
 	}
 	patched, err := patchReadme(*readme, block, *plain)

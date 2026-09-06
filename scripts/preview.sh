@@ -13,9 +13,23 @@ html="$work/preview.html"
 out="${3:-$work/terminal-preview.png}"
 trap 'rm -f "$html"' EXIT
 
+# The art frames each carry their own delay to take their turn, so the blanket
+# override would leave every one of them off screen. Work out which frame the
+# requested point in the loop lands on and pin that one open instead.
+frames=$(grep -o 'class="art a' "$svg" | wc -l | tr -d ' ')
+spin=$(sed -n 's/.*animation:flip \([0-9.]*\)s.*/\1/p' "$svg" | head -1)
+pin=""
+if [ "$frames" -gt 1 ] && [ -n "$spin" ]; then
+  secs=${at#-}
+  idx=$(awk -v s="${secs%s}" -v sp="$spin" -v n="$frames" \
+    'BEGIN{i=int(s/sp*n)%n; if(i<0)i+=n; print i}')
+  pin="svg .art{animation:none!important;visibility:hidden!important}"
+  pin="$pin svg .a$idx{visibility:visible!important}"
+fi
+
 {
   printf '<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#0d1117}'
-  printf 'svg *{animation-delay:%s!important}</style>' "$at"
+  printf 'svg *{animation-delay:%s!important}%s</style>' "$at" "$pin"
   cat "$svg"
 } > "$html"
 

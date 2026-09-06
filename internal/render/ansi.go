@@ -7,33 +7,17 @@ import (
 	"github.com/verdantran/verdantran/internal/content"
 )
 
-// sgr maps a segment class to a select-graphic-rendition code. Only the basic
-// sixteen — GitHub themes those, so the block stays legible in light mode.
-var sgr = map[string]string{
-	content.Prompt: "95",
-	content.Cmd:    "96",
-	content.Label:  "37",
-	content.Dot:    "90",
-	content.Value:  "96",
-	content.BarOn:  "32",
-	content.BarOff: "90",
-	content.Accent: "33",
-	content.Dim:    "90",
-	content.OK:     "92",
-}
-
-const frameSGR = "36"
-
-// ANSI draws the readout as a framed terminal panel. With colour off it emits
-// no escape sequences, for the case where a renderer shows them raw.
-func ANSI(lines []content.Line, title string, colour bool) string {
+// ANSI draws the readout as a framed terminal panel, in the theme's own codes.
+// With colour off it emits no escape sequences, for the case where a renderer
+// shows them raw.
+func ANSI(lines []content.Line, title string, colour bool, th Theme) string {
 	inner := 60
 	for _, l := range lines {
 		inner = max(inner, l.Width()+2)
 	}
 
 	paint := func(text, class string) string {
-		code, ok := sgr[class]
+		code, ok := th.SGR[class]
 		if !colour || !ok || text == "" {
 			return text
 		}
@@ -43,7 +27,7 @@ func ANSI(lines []content.Line, title string, colour bool) string {
 		if !colour {
 			return s
 		}
-		return "\x1b[" + frameSGR + "m" + s + "\x1b[0m"
+		return "\x1b[" + th.Frame + "m" + s + "\x1b[0m"
 	}
 
 	var b strings.Builder

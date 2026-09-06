@@ -4,7 +4,7 @@
 `internal/content`, and hands that single layout to two renderers:
 
 - `internal/render.SVG` draws `assets/terminal.svg` — a CRT terminal that types
-  itself out, holds on the prompt, and loops.
+  itself out, holds on the prompt, and loops, with the art turning behind it.
 - `internal/render.ANSI` draws the same lines as an ANSI-coloured block. The
   page does not carry it, but `make show` prints it, which is the quickest way
   to see a change without opening a browser.
@@ -29,7 +29,8 @@ set however you run it.
 
 ```
 -login            GitHub user to read (default verdantran)
--art              file holding an ASCII art frame for the banner
+-art              file holding the ASCII art frames for the banner
+-theme            palette for both renderers (default neon)
 -repos            how many public repositories to list; 0 drops the section
 -langs            how many languages to list
 -exclude-langs    languages to leave out of the mix (default "Jupyter Notebook")
@@ -41,6 +42,29 @@ set however you run it.
 `-exclude-langs` exists because GitHub sizes a language by bytes on disk, and a
 Jupyter notebook stores its own rendered output — one notebook can outweigh
 every other repository put together.
+
+## Themes
+
+`-theme` sets one palette for both renderers, so the banner and the block below
+it match: `neon`, `amber`, `phosphor`, `violet`, `mono`. Locally,
+`make render THEME=amber` passes it through, and `make show` prints the block
+in it.
+
+The SVG takes its colours straight from the theme. The ANSI block keeps to the
+basic sixteen codes whichever theme is chosen — those are the ones a viewer
+themes for itself, and that is what keeps the block readable for someone
+reading the page in light mode.
+
+## The art
+
+`-art` reads one file holding as many frames as it likes, separated by a form
+feed. A single frame is drawn as a still; several are shown in turn, on a ten
+second loop, so a frame set covering one whole turn of a shape comes back
+round to where it started without a jump.
+
+Every frame is cropped to one shared bounding box rather than to its own
+contents — cropping each to its own would re-centre the shape on every frame
+and turn the spin into a shudder.
 
 ## The all-time commit count
 
