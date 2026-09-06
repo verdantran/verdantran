@@ -21,6 +21,7 @@ concurrency:
 jobs:
   render:
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       # Pinned to a commit: a tag can be moved, and this job runs with
       # PROFILE_TOKEN in its environment.
