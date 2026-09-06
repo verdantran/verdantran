@@ -5,11 +5,15 @@ name: profile
 # goes stale, run this once by hand to wake it back up.
 on:
   schedule:
-    - cron: "17 */6 * * *"
+    # Once a day. The numbers move slowly and a run that changes nothing still
+    # costs minutes; the odd minute keeps it off the hour, where GitHub's
+    # scheduler is busiest and quietly drops runs it cannot place.
+    - cron: "17 4 * * *"
   workflow_dispatch:
 
-# No push trigger on purpose: with a PAT in PROFILE_TOKEN, the commit this job
-# makes would trigger the job again.
+# No push trigger on purpose. The commit below is pushed with GITHUB_TOKEN,
+# and GitHub does not start workflow runs from those pushes, so nothing loops
+# today — but a push trigger would build the loop the moment that changed.
 
 permissions:
   contents: write
