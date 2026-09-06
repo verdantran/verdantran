@@ -41,7 +41,7 @@ jobs:
           # A read-only PAT counts private work in the totals. Without it
           # the built-in token sees public repos only.
           GITHUB_TOKEN: ${{ secrets.PROFILE_TOKEN || secrets.GITHUB_TOKEN }}
-        run: go run ./cmd/profile -art assets/frames/donut.txt
+        run: go run ./cmd/profile -art assets/frames/donut.txt -theme mono
 
       - name: Commit if anything moved
         run: |
